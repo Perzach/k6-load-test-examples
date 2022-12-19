@@ -65,9 +65,45 @@ const user = users[Math.floor(Math.random() * users.length)];
 ```
 
 ### 5. Monitoring test results with Grafana / inluxdb
+1. Run grafana and influx docker containers: 
+```
+docker-compose up influxdb grafana
+```
 
+2. Run test configured to send metrics to influxdb
+```
+k6 run -o influxdb=http://localhost:8086/k6 tests/simple-service-test.js
+```
+
+3. You should now be able to access grafana at `localhost:3000` now and set up a Data Source and custom dashboards in grafana to monitor tests. You can import an example dashboard from the `grafana` folder in this repo. Use `http://host.docker.internal:8086` as data source url for InfluxDb, and `k6` as database.
+
+See [K6 docs](https://k6.io/docs/results-output/real-time/influxdb-+-grafana/) for more details.
 
 ### 6. Monitoring test results in DataDog
+1. Run datadog agent on your machine, remember to input your datadog api key:
+```
+DOCKER_CONTENT_TRUST=1 \
+docker run --rm -d \
+    --name datadog \
+    -v /var/run/docker.sock:/var/run/docker.sock:ro \
+    -v /proc/:/host/proc/:ro \
+    -v /sys/fs/cgroup/:/host/sys/fs/cgroup:ro \
+    -e DD_SITE="datadoghq.com" \
+    -e DD_API_KEY=<YOUR_DATADOG_API_KEY> \
+    -e DD_DOGSTATSD_NON_LOCAL_TRAFFIC=1 \
+    -p 8125:8125/udp \
+    datadog/agent:latest
+```
+
+2. Run tests:
+```
+K6_STATSD_ENABLE_TAGS=true k6 run --out statsd tests/simple-service-test.js
+```
+
+3. Metrics should now be accessible in datadog under `k6` namespace.
+
+More docs on pushing metrics to datadog is found [here](https://k6.io/docs/results-output/real-time/datadog/)
+
 
 
 ### 7. Run test distributed in local k8s cluster (minikube)
