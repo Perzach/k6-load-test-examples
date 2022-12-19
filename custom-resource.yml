@@ -1,0 +1,31 @@
+apiVersion: k6.io/v1alpha1
+kind: K6
+metadata:
+  name: k6-sample
+spec:
+  parallelism: 4
+  script:
+    configMap:
+      name: my-test-example
+      file: simple-service-test.js
+  # arguments: --out statsd
+  runner: 
+    env:
+    - name: START_RATE
+      value: "0"
+    - name: TARGET_TIME_UNIT
+      value: "1s"
+    - name: PRE_ALLOCATED_VUS
+      value: "1"
+    - name: MAX_VUS
+      value: "100"
+    - name: WARMUP_DURATION
+      value: "5s"
+    - name: TEST_DURATION
+      value: "30s"
+    - name: TARGET_ITERATIONS_THROUGHPUT
+      value: "50"
+    # - name: K6_STATSD_ENABLE_TAGS
+    #   value: "true"
+    # - name: K6_STATSD_ADDR
+    #   value: "localhost:8125"

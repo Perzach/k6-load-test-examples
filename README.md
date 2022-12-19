@@ -107,9 +107,58 @@ More docs on pushing metrics to datadog is found [here](https://k6.io/docs/resul
 
 
 ### 7. Run test distributed in local k8s cluster (minikube)
+1. Install and start [minikube](https://minikube.sigs.k8s.io/docs/start/)
+```
+brew install minikube
 
+minikube start
+```
+
+2. Point your kubectl-context to your local k8s cluster
+
+3. Follow [k6 documentation](https://k6.io/blog/running-distributed-tests-on-k8s/) to clone k6-operator into a location you like on your machine, and deploy its infrastructure on your local k8s: 
+```
+git clone https://github.com/grafana/k6-operator && cd k6-operator
+
+make deploy
+```
+
+4. Go back to the working directory of this repo and create a configmap for your test script
+```
+kubectl create configmap my-test-example --from-file tests/simple-service-test.js
+```
+
+5. Create a custom resource that will run the test in your namespace. In the custom resource you can control how many machines (pods) to run, which test script to run as well as various test configs (throughput, warmup, duration) with environment variables.
+```
+kubectl apply -f custom-resource.yml
+```
+
+6. Now you will see several pods spinning up in your default namespace, and you should be able to see in the service dashboards that traffic is hitting the service.
+
+7. Cleaning up local cluster after:
+```
+kubectl delete -f custom-resource.yml
+
+kubectl delete configmap my-test-example
+
+cd /path/to/k6-operator
+
+make delete
+
+minikube stop
+```
 
 ### 8. Control different number of machines running tests on k8s
-
+The `custom-resource.yml` file used to initiate a test in step 5 above has a config variable called `parallelism`. The number defined here controls the number of pods that will spin up to run tests in parallel.
 
 ### 9. Set different test configs in k8s
+By using environment variables to assign values to the `options` block in the tests, you can configure the tests running on k8s without changing the test script itself each time. Within the tests, env vars are available under the `__ENV` object.
+
+To see an example of this, see the `simple-service-test.js`, and also how env vars are passed to the containers in `custom-resource.yml`.
+
+### 10. Read shared files within pods running distributed tests
+Not implemented. The idea so far is to use shared volumes and reference these within the pods running the tests. 
+See [github issue](https://github.com/grafana/k6/issues/2043#issuecomment-1335391149) for more info.
+
+Alternatively, we could store files on s3 and use the [k6 s3 client](https://k6.io/docs/javascript-api/jslib/aws/s3client/) to fetch them.
+See [slack thread](https://k6io.slack.com/archives/C3FH0694P/p1669969233924929) for more info.
