@@ -9,7 +9,7 @@ brew install k6
 
 ## Use cases
 
-## 1 - Run a test locally
+### 1 - Run a test locally
 ```
 k6 run tests/simple-service-test.js
 ```
@@ -51,7 +51,18 @@ K6 does not support out of the box writing to a file but it is possible to use a
 4. Now you can use the new `k6` binary to run a test that writes into a local file, for example `./k6 run tests/print-user-file.js`
 
 ### 4. Read resources from file, shuffled
+By using k6 [Shared Array](https://k6.io/docs/javascript-api/k6-data/sharedarray/) you can initiate an array that is read from csv or json files, that is shared across the VUs of a given k6 shell.
 
+The following is an example of initializing the Shared Array, and also accessing it (shuffled):
+```
+// Initializing Shared Array
+const users = new SharedArray('Users', () => {
+  return papaparse.parse(open('../resources/testUsers.csv'), { header: true }).data
+})
+
+// Accessing users (shuffled)
+const user = users[Math.floor(Math.random() * users.length)];
+```
 
 ### 5. Monitoring test results with Grafana / inluxdb
 
