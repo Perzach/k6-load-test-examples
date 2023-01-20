@@ -97,7 +97,7 @@ docker run --rm -d \
 
 2. Run tests:
 ```
-K6_STATSD_ENABLE_TAGS=true k6 run --out statsd tests/simple-service-test.js
+K6_STATSD_ENABLE_TAGS=true K6_STATSD_ADDR=localhost:8125 k6 run --out statsd tests/simple-service-test.js
 ```
 
 3. Metrics should now be accessible in datadog under `k6` namespace.
